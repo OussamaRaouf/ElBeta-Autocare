@@ -404,24 +404,16 @@
 
 <script>
 /* =========================================================
-   CONFIG FIREBASE
+   CONFIG FIREBASE (VOS CLÉS)
    ========================================================= */
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyB_AmH2Toq8PbyagXX7Ubm4zX4-mtvvb8I",
-  authDomain: "elbeta-autocare.firebaseapp.com",
-  projectId: "elbeta-autocare",
-  storageBucket: "elbeta-autocare.firebasestorage.app",
+  apiKey:            "AIzaSyB_AmH2Toq8PbyagXX7Ubm4zX4-mtvvb8I",
+  authDomain:        "elbeta-autocare.firebaseapp.com",
+  projectId:         "elbeta-autocare",
+  storageBucket:     "elbeta-autocare.firebasestorage.app",
   messagingSenderId: "645648334482",
-  appId: "1:645648334482:web:2246a330e9900aee31b04b",
-  measurementId: "G-HS81XVM3BJ"
+  appId:             "1:645648334482:web:2246a330e9900aee31b04b",
+  measurementId:     "G-HS81XVM3BJ"
 };
 
 /* =========================================================
@@ -1561,7 +1553,7 @@ document.getElementById('btn-reset').addEventListener('click', () => {
 });
 
 /* =========================================================
-   INITIALISATION (le bloc qui règle le problème de blocage)
+   INITIALISATION
    ========================================================= */
 function showDemoFormNow(){
   document.getElementById('loginFirebase').style.display = 'none';
@@ -1586,16 +1578,14 @@ function showDemoFormNow(){
   setModeBadge();
 }
 
-// 1. Affichage immédiat pour ne jamais rester bloqué sur l'en-tête
 showDemoFormNow();
 
-// 2. Chargement de Firebase en arrière-plan
 (async () => {
   try {
     if (typeof initAuthFlow === 'function') {
       const configured = firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("REMPLACEZ");
       if (configured) {
-        initAuthFlow(); // Si Firebase est configuré, cette fonction basculera sur le vrai login
+        initAuthFlow();
       }
     }
   } catch(e) {
