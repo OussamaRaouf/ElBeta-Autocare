@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AutoCare · Gestion d'entretien du parc</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  :root{--bg:#eef2f9;--card:#fff;--ink:#0e1729;--muted:#64748b;--line:#e4e9f2;--ok:#10b981;--soon:#f59e0b;--late:#ef4444;--radius:18px;--shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px -14px rgba(16,24,40,.25)}
+  body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--ink);min-height:100vh;background:radial-gradient(900px 520px at 100% 0%,#e4ecff 0%,transparent 60%),radial-gradient(700px 420px at 0% 18%,#e8f7f1 0%,transparent 55%),var(--bg);-webkit-font-smoothing:antialiased}
+
+  /* LOGIN */
+  .login-screen{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:22px;background:radial-gradient(720px 340px at 10% 0%,rgba(99,102,241,.55),transparent 65%),radial-gradient(620px 320px at 90% 5%,rgba(14,165,233,.42),transparent 62%),linear-gradient(140deg,#0a1122 0%,#111a30 55%,#1b1436 100%)}
+  .login-card{width:min(420px,100%);background:#fff;border-radius:22px;box-shadow:0 44px 90px -34px rgba(0,0,0,.65);padding:30px}
+  .login-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .login-brand .brand-mark{width:44px;height:44px;border-radius:13px}
+  .login-card h2{margin:0 0 6px;font-size:20px;font-weight:800;letter-spacing:-.02em}
+  .login-card .sub{margin:0 0 22px;font-size:13px;color:var(--muted);font-weight:500;line-height:1.5}
+  .login-card label{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .login-card input{font:inherit;font-size:14px;padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:#f8fafd;outline:none;transition:.15s;text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink);width:100%}
+  .login-card input:focus{border-color:#6366f1;background:#fff;box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+  .login-btn{width:100%;font:inherit;font-size:14px;font-weight:700;cursor:pointer;padding:12px;border-radius:10px;border:0;background:linear-gradient(140deg,#4f46e5,#6366f1);color:#fff;box-shadow:0 12px 24px -12px rgba(79,70,229,.95);transition:.15s}
+  .login-btn:hover{transform:translateY(-1px)}
+  .login-btn:disabled{opacity:.6;cursor:wait;transform:none}
+  .login-error{margin-bottom:12px;padding:10px 12px;border-radius:9px;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;font-size:12.5px;font-weight:600;display:none}
+  .login-error.show{display:block}
+  .demo-banner{padding:12px 14px;border-radius:10px;margin-bottom:18px;background:#fef4e3;border:1px solid #fde0b5;color:#a35a06;font-size:12.5px;font-weight:600;line-height:1.5}
+
+  /* RÔLE SELECTOR */
+  .role-users{display:flex;flex-direction:column;gap:8px}
+  .role-user{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;font:inherit;text-align:left;transition:.15s}
+  .role-user:hover{background:#f8fafd;border-color:#c7d2fe;transform:translateY(-1px)}
+  .role-user .dav{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff;flex:none}
+  .role-user .dname{font-weight:700;font-size:14px;color:var(--ink)}
+  .role-user .drole{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;margin-left:auto}
+  .role-user .drole.admin{background:#eef2ff;color:#4f46e5}
+  .role-user .drole.member{background:#f4f6fb;color:#64748b}
+
+  /* HERO */
+  .hero{position:relative;overflow:hidden;color:#fff;padding:26px 0 112px;background:radial-gradient(720px 340px at 10% 0%,rgba(99,102,241,.55),transparent 65%),radial-gradient(620px 320px at 90% 5%,rgba(14,165,233,.42),transparent 62%),linear-gradient(140deg,#0a1122 0%,#111a30 55%,#1b1436 100%)}
+  .hero::after{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:22px 22px;-webkit-mask-image:linear-gradient(to bottom,#000 0%,transparent 88%);mask-image:linear-gradient(to bottom,#000 0%,transparent 88%)}
+  .shell{max-width:1180px;margin:0 auto;padding:0 22px;position:relative;z-index:2}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand-mark{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;flex:none;background:linear-gradient(140deg,#6366f1,#22d3ee);box-shadow:0 12px 28px -10px rgba(99,102,241,.95)}
+  .brand h1{margin:0;font-size:19px;letter-spacing:-.025em;font-weight:800}
+  .brand p{margin:3px 0 0;font-size:12.5px;color:#9fb0cf;font-weight:500}
+  .mode-badge{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;margin-top:6px}
+  .mode-badge.live{background:rgba(16,185,129,.18);color:#6ee7b7;border:1px solid rgba(16,185,129,.35)}
+  .mode-badge.demo{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+  .mode-badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .team{display:flex;align-items:flex-start;gap:12px}
+  .team-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+  .avatars{display:flex;align-items:center}
+  .avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font:inherit;font-size:11.5px;font-weight:800;color:#fff;margin-left:-9px;border:2px solid #131c30;box-shadow:0 3px 10px rgba(0,0,0,.35);padding:0;transition:.18s ease;cursor:pointer}
+  .avatar:first-child{margin-left:0}
+  .avatar:hover{transform:translateY(-2px)}
+  .avatar.active{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.22),0 4px 14px rgba(0,0,0,.45);transform:translateY(-2px)}
+  .you-line{display:flex;align-items:center;gap:8px}
+  .you{font-size:11px;color:#8ea2c4;font-weight:500;display:flex;align-items:center;gap:6px}
+  .you b{color:#e6edfa;font-weight:700}
+  .role-tag{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.04em;text-transform:uppercase}
+  .role-tag.admin{background:rgba(99,102,241,.28);color:#c7d2fe;border:1px solid rgba(99,102,241,.5)}
+  .role-tag.member{background:rgba(100,116,139,.28);color:#cbd5e1;border:1px solid rgba(100,116,139,.5)}
+  .btn-logout{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:11px;font-weight:600;padding:4px 9px;border-radius:7px;cursor:pointer;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#cbd5e1;transition:.15s}
+  .btn-logout:hover{background:rgba(239,68,68,.25);border-color:rgba(239,68,68,.4);color:#fecaca}
+
+  /* LAYOUT */
+  .wrap{max-width:1180px;margin:-80px auto 0;padding:0 22px 40px;position:relative;z-index:3}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+  .kpi{background:var(--card);border-radius:16px;padding:15px 17px;display:flex;align-items:center;gap:13px;border:1px solid rgba(255,255,255,.85);box-shadow:0 22px 44px -28px rgba(11,22,44,.65),0 2px 6px rgba(16,24,40,.05)}
+  .kpi-ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:18px;flex:none}
+  .kpi small{display:block;font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:2px}
+  .kpi strong{font-size:22px;letter-spacing:-.035em;font-weight:800;line-height:1}
+  .toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+  .pills{display:flex;gap:4px;background:#fff;padding:5px;border-radius:14px;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .pill{border:0;background:transparent;font:inherit;font-size:13.5px;font-weight:600;color:var(--muted);padding:9px 15px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:.18s ease;white-space:nowrap}
+  .pill:hover{color:var(--ink);background:#f4f6fb}
+  .pill.active{background:linear-gradient(140deg,#4f46e5,#6366f1);color:#fff;box-shadow:0 10px 20px -12px rgba(79,70,229,1)}
+  .pill span{font-size:11px;font-weight:700;background:rgba(15,23,42,.08);padding:2px 7px;border-radius:6px}
+  .pill.active span{background:rgba(255,255,255,.24)}
+  .toolbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .stamp{font-size:12.5px;color:var(--muted);font-weight:500}
+  .stamp b{color:#1e293b;font-weight:600}
+  .btn-hist{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;padding:10px 16px;border-radius:12px;border:1px solid var(--line);background:#fff;color:#1b2437;transition:.18s}
+  .btn-hist:hover{background:#f4f6fb;border-color:#c7d2fe;color:#4f46e5}
+  .btn-new{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;padding:10px 16px;border-radius:12px;border:1px solid transparent;background:linear-gradient(140deg,#4f46e5,#6366f1);color:#fff;box-shadow:0 12px 24px -12px rgba(79,70,229,.95);transition:.18s}
+  .btn-new:hover{transform:translateY(-1px);box-shadow:0 16px 28px -12px rgba(79,70,229,1)}
+  .btn-new.hidden{display:none}
+
+  /* GRID */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+  .vcard{position:relative;display:flex;flex-direction:column;gap:15px;background:#fff;border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow);padding:20px;overflow:hidden;transition:transform .22s ease,box-shadow .22s ease;animation:pop .45s cubic-bezier(.2,.8,.3,1) backwards}
+  @keyframes pop{from{opacity:0;transform:translateY(12px)}}
+  .vcard:hover{transform:translateY(-4px);box-shadow:0 24px 46px -24px rgba(16,24,40,.4)}
+  .vcard::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--accent) 0%,var(--accent) 45%,transparent 100%)}
+  .vtop{display:flex;align-items:flex-start;gap:13px}
+  .vicon{width:47px;height:47px;border-radius:14px;display:grid;place-items:center;flex:none;background:var(--soft);color:var(--accent);border:1px solid var(--soft)}
+  .vtop h3{margin:0;font-size:15.5px;font-weight:700;letter-spacing:-.02em}
+  .vtop p{margin:3px 0 0;font-size:12px;color:var(--muted);font-weight:500}
+  .badge{font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;white-space:nowrap;letter-spacing:.01em}
+  .badge.ok{background:#e6f8f0;color:#0b7a55}
+  .badge.soon{background:#fef4e3;color:#a35a06}
+  .badge.late{background:#fdeaea;color:#b91c1c}
+  .vstats{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:13px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .vstats span{display:block;font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+  .vstats strong{font-size:13.5px;font-weight:700;letter-spacing:-.01em;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini{display:flex;flex-direction:column;gap:9px;flex:1}
+  .mini-row{display:flex;align-items:center;gap:10px;font-size:12.8px}
+  .mini-ico{width:27px;height:27px;border-radius:9px;display:grid;place-items:center;font-size:12.5px;background:#f5f7fc;flex:none}
+  .mini-name{flex:1;min-width:0;color:#26324a;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini-val{font-size:11.5px;font-weight:700;white-space:nowrap}
+  .mini-val.ok{color:#0b7a55}
+  .mini-val.soon{color:#a35a06}
+  .mini-val.late{color:#b91c1c}
+  .card-actions{display:flex;gap:8px;margin-top:auto}
+  .btn-detail{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;padding:11px;border-radius:12px;border:1px solid var(--line);background:#f8fafd;color:#1b2437;transition:.18s ease}
+  .btn-detail:hover{background:var(--accent);border-color:var(--accent);color:#fff;transform:translateY(-1px)}
+  .btn-ico{width:44px;height:44px;border-radius:12px;flex:none;border:1px solid var(--line);background:#f8fafd;color:#64748b;cursor:pointer;display:grid;place-items:center;transition:.18s ease}
+  .btn-ico:hover{background:#eef2ff;border-color:#c7d2fe;color:#4f46e5;transform:translateY(-1px)}
+  .btn-ico[data-dup]:hover{background:#e6f8f0;border-color:#bbf0d8;color:#0b7a55}
+  .btn-ico.btn-danger:hover{background:#fef2f2;border-color:#fecaca;color:#dc2626}
+  .btn-ico.hidden{display:none}
+
+  /* OVERLAYS */
+  .overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(8,14,28,.55);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);opacity:0;pointer-events:none;transition:opacity .22s ease}
+  .overlay.open{opacity:1;pointer-events:auto}
+  .modal{width:min(730px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:22px;box-shadow:0 44px 90px -34px rgba(0,0,0,.65);transform:translateY(16px) scale(.975);transition:transform .28s cubic-bezier(.2,.8,.3,1)}
+  .overlay.open .modal{transform:none}
+  .modal::-webkit-scrollbar{width:9px}
+  .modal::-webkit-scrollbar-thumb{background:#d5dce9;border-radius:9px;border:2px solid #fff}
+
+  .mhead{position:relative;display:flex;align-items:flex-start;gap:14px;padding:20px 22px;color:#fff;background:linear-gradient(135deg,var(--accent) 0%,#101a2f 130%)}
+  .mhead .vicon{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);color:#fff;width:52px;height:52px;border-radius:15px;margin-top:2px}
+  .mhead h2{margin:0;font-size:17.5px;font-weight:800;letter-spacing:-.02em}
+  .mhead p{margin:3px 0 0;font-size:12.5px;color:rgba(255,255,255,.78);font-weight:500}
+  .mhead .badge{background:rgba(255,255,255,.2);color:#fff}
+  .mmeta{margin-top:6px;font-size:11px;color:rgba(255,255,255,.62);font-weight:500;line-height:1.5}
+  .mmeta b{color:rgba(255,255,255,.92);font-weight:700}
+  .mhead-actions{display:flex;gap:6px;margin-left:auto;flex:none}
+  .mhbtn{width:34px;height:34px;border-radius:10px;cursor:pointer;flex:none;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center;font-size:15px;line-height:1;transition:.15s}
+  .mhbtn:hover{background:rgba(255,255,255,.28)}
+  .mhbtn.danger:hover{background:rgba(239,68,68,.55);border-color:rgba(239,68,68,.75)}
+  .mhbtn.hidden{display:none}
+
+  .mbody{padding:18px 22px 24px}
+  .dpills{display:flex;gap:4px;background:#f4f6fb;padding:5px;border-radius:12px;border:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+  .dpills .pill{font-size:12.5px;padding:7px 12px;border-radius:9px}
+  .dpills .pill span{font-size:10.5px;padding:2px 6px}
+  .irow{display:flex;gap:13px;padding:14px 0;border-bottom:1px dashed var(--line)}
+  .irow:last-child{border-bottom:0;padding-bottom:0}
+  .iico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:16px;background:#f5f7fc;flex:none;border:1px solid #eef1f8}
+  .imain{flex:1;min-width:0}
+  .itop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .iname{font-size:13.8px;font-weight:700;letter-spacing:-.01em}
+  .bar{height:6px;border-radius:99px;background:#eef1f7;overflow:hidden;margin-bottom:8px}
+  .bar i{display:block;height:100%;border-radius:99px;transition:width .5s ease}
+  .isub{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:11.8px;color:var(--muted);font-weight:500}
+  .isub b{color:#334155;font-weight:600}
+  .imeta{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#94a3b8;font-weight:500;margin-top:7px}
+  .imeta b{color:#64748b;font-weight:700}
+  .dempty{text-align:center;padding:28px 10px;color:var(--muted);font-size:13px;font-weight:500}
+  .dempty span{display:block;font-size:26px;margin-bottom:6px}
+
+  .modal.modal-edit{display:flex;flex-direction:column;overflow:hidden;padding:0}
+  .ehead{flex-shrink:0;display:flex;align-items:center;gap:13px;padding:16px 22px;border-bottom:1px solid var(--line);background:#fff}
+  .ehead .eico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:17px;flex:none;background:var(--soft);color:var(--accent);border:1px solid var(--soft)}
+  .ehead h2{margin:0;font-size:16px;font-weight:800;letter-spacing:-.02em}
+  .ehead p{margin:2px 0 0;font-size:12px;color:var(--muted);font-weight:500}
+  .ehead p b{color:#4f46e5;font-weight:700}
+  .eclose{margin-left:auto;width:32px;height:32px;border-radius:9px;cursor:pointer;border:1px solid var(--line);background:#f8fafd;color:#64748b;display:grid;place-items:center;font-size:17px;line-height:1;flex:none;transition:.15s}
+  .eclose:hover{background:#fee2e2;border-color:#fecaca;color:#dc2626}
+  .ebody{flex:1;overflow-y:auto;padding:18px 22px 22px}
+  .ebody::-webkit-scrollbar{width:9px}
+  .ebody::-webkit-scrollbar-thumb{background:#d5dce9;border-radius:9px;border:2px solid #fff}
+  .esection{margin-bottom:20px}
+  .esection h3{margin:0 0 10px;font-size:11px;font-weight:800;color:#4f46e5;text-transform:uppercase;letter-spacing:.08em}
+  .egrid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+  .egrid label{display:flex;flex-direction:column;gap:5px;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .egrid input,.egrid select{font:inherit;font-size:13.5px;font-weight:500;color:var(--ink);padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:#f8fafd;outline:none;transition:.15s;text-transform:none;letter-spacing:0;width:100%}
+  .egrid input:focus,.egrid select:focus{border-color:#6366f1;background:#fff;box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+  .egrid input[type="color"]{padding:4px;height:38px;cursor:pointer}
+  .egrid input:disabled{background:#eef2f9;color:#94a3b8;cursor:not-allowed}
+  .eitem{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fbfcfe;transition:border-color .18s,opacity .18s,transform .18s}
+  .eitem-top{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+  .eitem-emoji{width:46px;height:38px;text-align:center;font-size:18px;flex:none;padding:0;border-radius:9px;border:1px solid var(--line);background:#fff;outline:none}
+  .eitem-label{flex:1;padding:9px 11px;border-radius:9px;border:1px solid var(--line);font:inherit;font-size:13.5px;font-weight:600;background:#fff;outline:none;min-width:0}
+  .eitem-label:focus,.eitem-emoji:focus,.eitem-grid input:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+  .eitem-del{width:36px;height:38px;border-radius:9px;border:1px solid #fdeaea;background:#fef2f2;color:#dc2626;cursor:pointer;font-size:14px;flex:none;display:grid;place-items:center;transition:.15s}
+  .eitem-del:hover{background:#fee2e2;border-color:#fecaca}
+  .eitem-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .eitem-grid label{display:flex;flex-direction:column;gap:3px;font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .eitem-grid input{font:inherit;font-size:12.5px;padding:7px 9px;width:100%;border-radius:7px;border:1px solid var(--line);background:#fff;outline:none;color:var(--ink)}
+  .btn-add{width:100%;padding:11px;border-radius:10px;border:1.5px dashed #c7d2fe;background:#eef2ff;color:#4f46e5;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.15s}
+  .btn-add:hover{background:#e0e7ff;border-color:#818cf8}
+  .efoot{flex-shrink:0;display:flex;gap:10px;justify-content:flex-end;padding:14px 22px;background:#fff;border-top:1px solid var(--line)}
+  .btn-cancel,.btn-save{font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;padding:10px 20px;border-radius:10px;transition:.15s}
+  .btn-cancel{border:1px solid var(--line);background:#fff;color:#475569}
+  .btn-cancel:hover{background:#f4f6fb}
+  .btn-save{border:1px solid transparent;background:linear-gradient(140deg,#4f46e5,#6366f1);color:#fff;box-shadow:0 10px 22px -12px rgba(79,70,229,1)}
+  .btn-save:hover{transform:translateY(-1px)}
+  .notice{margin-bottom:12px;padding:10px 12px;border-radius:9px;background:#eef2ff;border:1px solid #c7d2fe;color:#4f46e5;font-size:12px;font-weight:600;line-height:1.5}
+
+  /* HISTORIQUE */
+  .modal.modal-hist{display:flex;flex-direction:column;width:min(1140px,96vw);overflow:hidden;padding:0}
+  .hbody{flex:1;overflow:auto;padding:0}
+  .hbody::-webkit-scrollbar{width:9px;height:9px}
+  .hbody::-webkit-scrollbar-thumb{background:#d5dce9;border-radius:9px;border:2px solid #fff}
+  .hist-table-wrap{overflow-x:auto}
+  .hist-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:920px}
+  .hist-table thead{position:sticky;top:0;z-index:2}
+  .hist-table thead tr:first-child th{background:#fff;padding:14px 12px 10px;text-align:left;font-size:10.5px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid #e4e9f2;white-space:nowrap}
+  .hist-table thead tr.filters th{background:#f8fafd;padding:6px 6px 8px;border-bottom:1px solid #e4e9f2;font-weight:normal}
+  .hist-table .hf{width:100%;min-width:60px;padding:6px 8px;font:inherit;font-size:11.5px;border:1px solid #e4e9f2;border-radius:7px;background:#fff;color:var(--ink);outline:none;box-sizing:border-box}
+  .hist-table .hf:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+  .hist-table tbody td{padding:12px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+  .hist-table tbody tr:hover td{background:#fbfcfe}
+  .hist-date b{display:block;font-weight:600;color:#1e293b;font-size:12.5px;white-space:nowrap}
+  .hist-date span{display:block;font-size:11px;color:#94a3b8;margin-top:2px}
+  .hist-user{display:flex;align-items:center;gap:7px}
+  .hist-avatar{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:9.5px;font-weight:800;color:#fff;flex:none}
+  .hist-user span{font-weight:600;font-size:12.5px;color:#1e293b;white-space:nowrap}
+  .hist-badge{display:inline-block;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:7px;white-space:nowrap}
+  .hist-veh b{display:block;font-weight:600;color:#1e293b;font-size:12.5px}
+  .hist-veh span{display:block;font-size:11px;color:#94a3b8;margin-top:2px;font-variant-numeric:tabular-nums}
+  .hist-item{font-weight:500;color:#334155;font-size:12.5px}
+  .hist-details{color:#475569;font-size:11.5px;line-height:1.5;word-break:break-word;max-width:280px}
+  .hist-empty td{text-align:center;padding:44px 10px;color:#94a3b8;font-size:13px;font-weight:500}
+  .hist-empty td span{display:block;font-size:26px;margin-bottom:8px;opacity:.7}
+  .hist-foot{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:#fff;border-top:1px solid var(--line);gap:10px;flex-wrap:wrap}
+  .hist-count{font-size:12.5px;color:var(--muted);font-weight:600}
+  .hist-count b{color:#4f46e5}
+  .hist-foot-right{display:flex;gap:8px;align-items:center}
+  .btn-clear{font:inherit;font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:9px;cursor:pointer;border:1px solid #fdeaea;background:#fef2f2;color:#dc2626;transition:.15s}
+  .btn-clear:hover{background:#fee2e2;border-color:#fecaca}
+  .btn-close-hist{font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:#fff;color:#1e293b;transition:.15s}
+  .btn-close-hist:hover{background:#f4f6fb}
+
+  .foot{text-align:center;font-size:12px;color:#94a3b8;padding:0 0 34px;font-weight:500}
+  .link-reset{background:none;border:0;color:#94a3b8;font:inherit;font-size:12px;cursor:pointer;text-decoration:underline;margin-left:10px;padding:0}
+  .link-reset:hover{color:#dc2626}
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:12px 22px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:0 20px 40px -15px rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:.3s ease;z-index:300;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.err{background:#b91c1c}
+
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){
+    .hero{padding:20px 0 100px}
+    .wrap{margin-top:-72px;padding:0 15px 30px}
+    .shell{padding:0 15px}
+    .kpis{grid-template-columns:repeat(2,1fr);gap:10px}
+    .kpi{padding:12px;gap:10px}
+    .kpi-ico{width:36px;height:36px;font-size:15px;border-radius:11px}
+    .kpi strong{font-size:18px}
+    .kpi small{font-size:9.5px}
+    .grid{grid-template-columns:1fr}
+    .toolbar{gap:10px}
+    .toolbar-right{width:100%;justify-content:flex-end}
+    .stamp{display:none}
+    .pill{padding:8px 11px;font-size:12.5px}
+    .egrid,.eitem-grid{grid-template-columns:1fr}
+    .avatar{width:32px;height:32px;font-size:10.5px}
+    .card-actions{gap:6px}
+    .btn-ico{width:40px;height:40px;border-radius:10px}
+    .btn-detail{font-size:12.5px;padding:10px}
+    .btn-detail svg{width:13px;height:13px}
+    .hist-foot{padding:12px 14px}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-mark">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 17h14"/><path d="M3 17v-4.2c0-.4.1-.8.3-1.1L5.6 7c.4-.6 1-.9 1.7-.9h9.4c.7 0 1.3.3 1.7.9l2.3 4.7c.2.3.3.7.3 1.1V17"/>
+          <circle cx="7" cy="17.6" r="1.7"/><circle cx="17" cy="17.6" r="1.7"/><path d="M3.6 12.6h16.8"/>
+        </svg>
+      </div>
+      <div>
+        <h1 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-.02em">AutoCare</h1>
+        <p style="margin:2px 0 0;font-size:11.5px;color:var(--muted);font-weight:500">Accès familial sécurisé</p>
+      </div>
+    </div>
+
+    <div id="loginFirebase" style="display:none">
+      <h2>Connexion</h2>
+      <p class="sub">Un seul compte pour toute la famille. Entrez l'e-mail et le mot de passe partagés, puis choisissez qui vous êtes.</p>
+      <form id="loginForm" autocomplete="off">
+        <label>Adresse e-mail
+          <input type="email" id="loginEmail" placeholder="famille@exemple.com" required>
+        </label>
+        <label>Mot de passe
+          <input type="password" id="loginPassword" placeholder="••••••••" required>
+        </label>
+        <div id="loginError" class="login-error"></div>
+        <button type="submit" class="login-btn" id="loginBtn">Se connecter</button>
+      </form>
+    </div>
+
+    <div id="loginDemo" style="display:none">
+      <div class="demo-banner">⚠️ <b>Mode démonstration</b> — Firebase n'est pas configuré. Données stockées dans ce navigateur uniquement.</div>
+      <h2>Choisir un utilisateur</h2>
+      <p class="sub">Sélectionnez qui utilise l'application (démo).</p>
+      <div class="role-users" id="demoUsers"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RÔLE SELECTOR (après login Firebase) -->
+<div id="roleScreen" class="login-screen" style="display:none">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-mark">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 17h14"/><path d="M3 17v-4.2c0-.4.1-.8.3-1.1L5.6 7c.4-.6 1-.9 1.7-.9h9.4c.7 0 1.3.3 1.7.9l2.3 4.7c.2.3.3.7.3 1.1V17"/>
+          <circle cx="7" cy="17.6" r="1.7"/><circle cx="17" cy="17.6" r="1.7"/><path d="M3.6 12.6h16.8"/>
+        </svg>
+      </div>
+      <div>
+        <h1 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-.02em">AutoCare</h1>
+        <p style="margin:2px 0 0;font-size:11.5px;color:var(--muted);font-weight:500">Qui utilise l'application ?</p>
+      </div>
+    </div>
+    <h2>Sélectionnez votre profil</h2>
+    <p class="sub" style="margin-bottom:16px">L'application utilise un compte partagé. Indiquez qui vous êtes pour que l'historique des modifications soit correct.</p>
+    <div class="role-users" id="roleUsers"></div>
+    <button class="login-btn" id="roleLogout" style="background:#f4f6fb;color:#475569;margin-top:14px;box-shadow:none">Se déconnecter</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+<header class="hero">
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 17h14"/><path d="M3 17v-4.2c0-.4.1-.8.3-1.1L5.6 7c.4-.6 1-.9 1.7-.9h9.4c.7 0 1.3.3 1.7.9l2.3 4.7c.2.3.3.7.3 1.1V17"/>
+            <circle cx="7" cy="17.6" r="1.7"/><circle cx="17" cy="17.6" r="1.7"/><path d="M3.6 12.6h16.8"/>
+          </svg>
+        </div>
+        <div>
+          <h1>AutoCare</h1>
+          <p>Suivi d'entretien du parc familial</p>
+          <div id="modeBadge"></div>
+        </div>
+      </div>
+      <div class="team">
+        <div class="team-right">
+          <div class="avatars" id="avatars"></div>
+          <div class="you-line">
+            <span class="you" id="you"></span>
+            <button class="btn-logout" id="btnLogout" title="Se déconnecter">Déconnexion</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="kpis" id="kpis"></section>
+  <div class="toolbar">
+    <div class="pills" id="pills">
+      <button class="pill active" data-filter="all">Tous <span id="c-all">0</span></button>
+      <button class="pill" data-filter="car">Voitures <span id="c-car">0</span></button>
+      <button class="pill" data-filter="moto">Moto <span id="c-moto">0</span></button>
+    </div>
+    <div class="toolbar-right">
+      <div class="stamp" id="stamp"></div>
+      <button class="btn-hist" id="btn-hist">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        Historique
+      </button>
+      <button class="btn-new" id="btn-new">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Nouveau véhicule
+      </button>
+    </div>
+  </div>
+  <section class="grid" id="grid"></section>
+</main>
+
+<div class="foot">
+  AutoCare · <span id="footMode">Mode démo local</span>
+  <button class="link-reset" id="btn-reset">Réinitialiser les données de démo</button>
+</div>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="overlay" id="editOverlay"><div class="modal modal-edit" id="editModal"></div></div>
+<div class="overlay" id="histOverlay"><div class="modal modal-hist" id="histModal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   CONFIG FIREBASE
+   ========================================================= */
+const firebaseConfig = {
+  apiKey:            "REMPLACEZ_PAR_VOTRE_API_KEY",
+  authDomain:        "REMPLACEZ.firebaseapp.com",
+  projectId:         "REMPLACEZ_PROJECT_ID",
+  storageBucket:     "REMPLACEZ.appspot.com",
+  messagingSenderId: "REMPLACEZ_SENDER_ID",
+  appId:             "REMPLACEZ_APP_ID"
+};
+
+/* =========================================================
+   UTILISATEURS (rôles)
+   ========================================================= */
+const USERS = [
+  { email:'djalil@famille.local', name:'Djalil', initials:'DJ', color:'linear-gradient(140deg,#6366f1,#8b5cf6)', role:'admin' },
+  { email:'ahmed@famille.local',  name:'Ahmed',  initials:'AH', color:'linear-gradient(140deg,#0ea5e9,#22d3ee)', role:'member' },
+  { email:'bachir@famille.local', name:'Bachir', initials:'BA', color:'linear-gradient(140deg,#f59e0b,#f97316)', role:'member' },
+  { email:'raouf@famille.local',  name:'Raouf',  initials:'RA', color:'linear-gradient(140deg,#10b981,#34d399)', role:'member' },
+  { email:'badrou@famille.local', name:'Badrou', initials:'BD', color:'linear-gradient(140deg,#ef4444,#f472b6)', role:'member' }
+];
+const EMAILS = Object.fromEntries(USERS.map(u => [u.name.toLowerCase(), u.email]));
+const findUserByEmail = e => USERS.find(u => u.email.toLowerCase() === (e||'').toLowerCase());
+const nameFromEmail   = e => { const u = findUserByEmail(e); return u ? u.name : (e || '—'); };
+const initialsFromEmail = e => { const u = findUserByEmail(e); return u ? u.initials : (e||'?').slice(0,2).toUpperCase(); };
+const colorFromEmail  = e => { const u = findUserByEmail(e); return u ? u.color : 'linear-gradient(140deg,#94a3b8,#64748b)'; };
+const roleFromName    = n => { const u = USERS.find(x => x.name === n); return u ? u.role : 'member'; };
+
+/* =========================================================
+   ÉTAT + PERMISSIONS
+   ========================================================= */
+const state = {
+  demoMode: false,
+  currentUser: null,     // { email, name, initials, color, role }
+  vehicles: [],
+  history: [],
+  filter: 'all',
+  unsubVehicles: null,
+  unsubHistory: null
+};
+const isAdmin = () => state.currentUser?.role === 'admin';
+const canCreateVehicle = () => isAdmin();
+const canDeleteVehicle = () => isAdmin();
+const canDuplicateVehicle = () => isAdmin();
+
+/* =========================================================
+   OUTILS
+   ========================================================= */
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+const parseISO = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const d = n => { const x = new Date(TODAY); x.setDate(x.getDate() + n); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; };
+const daysUntil = s => Math.round((parseISO(s) - TODAY) / 86400000);
+const fmtNum = n => Number(n).toLocaleString('fr-FR');
+const fmtDate = s => parseISO(s).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+const fmtWhen = iso => { if (!iso) return ''; const dt = new Date(iso); return isNaN(dt) ? '' : dt.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }); };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const norm = x => (x === undefined || x === null) ? '' : String(x);
+const tint = (hex, a=0.12) => { const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16); const mix = c => Math.round(c*a + 255*(1-a)); return `rgb(${mix(r)},${mix(g)},${mix(b)})`; };
+const nowISO = () => new Date().toISOString();
+const genId = () => 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+const ACTION_META = {
+  create_vehicle:    { label:'Création véhicule',     bg:'#e6f8f0', color:'#0b7a55' },
+  edit_vehicle:      { label:'Modif. véhicule',       bg:'#eef2ff', color:'#4f46e5' },
+  delete_vehicle:    { label:'Suppression véhicule',  bg:'#fdeaea', color:'#b91c1c' },
+  duplicate_vehicle: { label:'Duplication véhicule',  bg:'#f2ecff', color:'#7c3aed' },
+  add_item:          { label:'Ajout entretien',       bg:'#e6f8f0', color:'#0b7a55' },
+  edit_item:         { label:'Modif. entretien',      bg:'#eef2ff', color:'#4f46e5' },
+  remove_item:       { label:'Suppression entretien', bg:'#fdeaea', color:'#b91c1c' }
+};
+
+/* =========================================================
+   DONNÉES DE DÉMO
+   ========================================================= */
+const DEFAULT_VEHICLES = [
+  { id:'duster', type:'car', name:'Dacia Duster', plate:'12345-116-16', year:2019, km:85400, fuel:'Diesel', accent:'#3b82f6', soft:'#eaf2ff',
+    items:[
+      { label:'Vidange moteur', emoji:'🛢️', lastKm:77000, dueKm:87000, since:d(-347), dueDate:d(18) },
+      { label:'Filtre à huile', emoji:'🧴', lastKm:77000, dueKm:87000, since:d(-347), dueDate:d(18) },
+      { label:'Filtre à air', emoji:'🌬️', lastKm:60000, dueKm:90000, since:d(-400), dueDate:d(330) },
+      { label:'Filtre habitacle', emoji:'❄️', since:d(-350), dueDate:d(15) },
+      { label:'Filtre à carburant', emoji:'⛽', lastKm:55000, dueKm:95000, since:d(-600), dueDate:d(130) },
+      { label:'Assurance', emoji:'🛡️', since:d(-353), dueDate:d(12) },
+      { label:'Contrôle technique', emoji:'🔧', since:d(-225), dueDate:d(140) },
+      { label:'Pneus', emoji:'🛞', since:d(-500), dueDate:d(230) }
+    ]
+  },
+  { id:'clio', type:'car', name:'Renault Clio 4', plate:'45621-116-16', year:2021, km:52300, fuel:'Essence', accent:'#f59e0b', soft:'#fff4e2',
+    items:[
+      { label:'Vidange moteur', emoji:'🛢️', lastKm:45000, dueKm:54000, since:d(-300), dueDate:d(65) },
+      { label:'Filtre à huile', emoji:'🧴', lastKm:45000, dueKm:54000, since:d(-300), dueDate:d(65) },
+      { label:'Filtre à air', emoji:'🌬️', lastKm:30000, dueKm:60000, since:d(-420), dueDate:d(300) },
+      { label:'Filtre habitacle', emoji:'❄️', since:d(-180), dueDate:d(185) },
+      { label:'Assurance', emoji:'🛡️', since:d(-362), dueDate:d(3) },
+      { label:'Contrôle technique', emoji:'🔧', since:d(-700), dueDate:d(28) },
+      { label:'Pneus', emoji:'🛞', since:d(-250), dueDate:d(150) }
+    ]
+  },
+  { id:'208', type:'car', name:'Peugeot 208', plate:'78934-116-16', year:2017, km:121400, fuel:'Diesel', accent:'#ef4444', soft:'#feeceb',
+    items:[
+      { label:'Vidange moteur', emoji:'🛢️', lastKm:110000, dueKm:120000, since:d(-380), dueDate:d(-12) },
+      { label:'Filtre à huile', emoji:'🧴', lastKm:110000, dueKm:120000, since:d(-380), dueDate:d(-12) },
+      { label:'Filtre à air', emoji:'🌬️', lastKm:105000, dueKm:123000, since:d(-430), dueDate:d(60) },
+      { label:'Filtre habitacle', emoji:'❄️', since:d(-400), dueDate:d(-35) },
+      { label:'Filtre à carburant', emoji:'⛽', lastKm:95000, dueKm:130000, since:d(-500), dueDate:d(180) },
+      { label:'Assurance', emoji:'🛡️', since:d(-300), dueDate:d(65) },
+      { label:'Contrôle technique', emoji:'🔧', since:d(-380), dueDate:d(-20) },
+      { label:'Pneus', emoji:'🛞', since:d(-500), dueDate:d(120) }
+    ]
+  },
+  { id:'moto', type:'moto', name:'Yamaha XMAX 125', plate:'21600-116-16', year:2022, km:18400, fuel:'Essence', accent:'#8b5cf6', soft:'#f2ecff',
+    items:[
+      { label:'Vidange moteur', emoji:'🛢️', lastKm:14000, dueKm:22000, since:d(-200), dueDate:d(165) },
+      { label:'Filtre à air', emoji:'🌬️', lastKm:10000, dueKm:24000, since:d(-400), dueDate:d(330) },
+      { label:'Bougie', emoji:'🔌', lastKm:12000, dueKm:24000, since:d(-450), dueDate:d(280) },
+      { label:'Chaîne / courroie', emoji:'⛓️', since:d(-300), dueDate:d(65) },
+      { label:'Pneus', emoji:'🛞', since:d(-320), dueDate:d(45) },
+      { label:'Assurance', emoji:'🛡️', since:d(-357), dueDate:d(8) },
+      { label:'Vignette', emoji:'📄', since:d(-330), dueDate:d(40) }
+    ]
+  }
+];
+DEFAULT_VEHICLES.forEach(v => {
+  v.createdByEmail = EMAILS.djalil; v.createdAt = d(-365); v.createdByUser = 'Djalil';
+  v.items.forEach(it => { it.createdByEmail = EMAILS.djalil; it.createdAt = it.since || d(-300); it.createdByUser = 'Djalil'; });
+});
+DEFAULT_VEHICLES[0].items[0].updatedByEmail = EMAILS.ahmed;  DEFAULT_VEHICLES[0].items[0].updatedAt = d(-20);  DEFAULT_VEHICLES[0].items[0].updatedByUser = 'Ahmed';
+DEFAULT_VEHICLES[1].items[4].updatedByEmail = EMAILS.bachir; DEFAULT_VEHICLES[1].items[4].updatedAt = d(-5);   DEFAULT_VEHICLES[1].items[4].updatedByUser = 'Bachir';
+DEFAULT_VEHICLES[2].items[0].updatedByEmail = EMAILS.raouf;  DEFAULT_VEHICLES[2].items[0].updatedAt = d(-15);  DEFAULT_VEHICLES[2].items[0].updatedByUser = 'Raouf';
+DEFAULT_VEHICLES[3].items[5].updatedByEmail = EMAILS.badrou; DEFAULT_VEHICLES[3].items[5].updatedAt = d(-3);   DEFAULT_VEHICLES[3].items[5].updatedByUser = 'Badrou';
+
+function seedHistory(){
+  const dt = (n, hh=10, mm=15) => { const x = new Date(); x.setDate(x.getDate() - n); x.setHours(hh, mm, 0, 0); return x.toISOString(); };
+  return [
+    { id:'h1', timestamp:dt(365,9,12),  userEmail:EMAILS.djalil, userName:'Djalil', action:'create_vehicle',    vehicleName:'Dacia Duster',     vehiclePlate:'12345-116-16', details:'8 entretiens ajoutés' },
+    { id:'h2', timestamp:dt(360,14,5),  userEmail:EMAILS.djalil, userName:'Djalil', action:'create_vehicle',    vehicleName:'Renault Clio 4',   vehiclePlate:'45621-116-16', details:'7 entretiens ajoutés' },
+    { id:'h3', timestamp:dt(355,11,30), userEmail:EMAILS.djalil, userName:'Djalil', action:'create_vehicle',    vehicleName:'Peugeot 208',      vehiclePlate:'78934-116-16', details:'8 entretiens ajoutés' },
+    { id:'h4', timestamp:dt(340,16,45), userEmail:EMAILS.djalil, userName:'Djalil', action:'create_vehicle',    vehicleName:'Yamaha XMAX 125',  vehiclePlate:'21600-116-16', details:'7 entretiens ajoutés' },
+    { id:'h5', timestamp:dt(20,10,22),  userEmail:EMAILS.ahmed,  userName:'Ahmed',  action:'edit_item',         vehicleName:'Dacia Duster',     vehiclePlate:'12345-116-16', itemName:'Vidange moteur',  details:'Prochain km : 87000 → 90000' },
+    { id:'h6', timestamp:dt(15,15,40),  userEmail:EMAILS.raouf,  userName:'Raouf',  action:'edit_item',         vehicleName:'Peugeot 208',      vehiclePlate:'78934-116-16', itemName:'Vidange moteur',  details:'Échéance : 10 oct. → 15 oct.' },
+    { id:'h7', timestamp:dt(10,9,15),   userEmail:EMAILS.bachir, userName:'Bachir', action:'add_item',          vehicleName:'Renault Clio 4',   vehiclePlate:'45621-116-16', itemName:'Lave-glace',      details:'Prochain km : 55000' },
+    { id:'h8', timestamp:dt(5,14,50),   userEmail:EMAILS.bachir, userName:'Bachir', action:'edit_item',         vehicleName:'Renault Clio 4',   vehiclePlate:'45621-116-16', itemName:'Assurance',       details:'Échéance : 15 oct. → 30 oct.' },
+    { id:'h9', timestamp:dt(3,18,12),   userEmail:EMAILS.badrou, userName:'Badrou', action:'edit_item',         vehicleName:'Yamaha XMAX 125',  vehiclePlate:'21600-116-16', itemName:'Assurance',       details:'Échéance : 25 oct. → 5 nov.' },
+    { id:'h10',timestamp:dt(1,11,5),    userEmail:EMAILS.djalil, userName:'Djalil', action:'edit_item',         vehicleName:'Dacia Duster',     vehiclePlate:'12345-116-16', itemName:'Filtre habitacle',details:'Dernier km : 77000 → 80000' }
+  ];
+}
+
+/* =========================================================
+   COUCHE DE DONNÉES
+   ========================================================= */
+const DEMO_VKEY = 'autocare_demo_vehicles_v2';
+const DEMO_HKEY = 'autocare_demo_history_v2';
+
+function loadDemoData(){
+  try { state.vehicles = JSON.parse(localStorage.getItem(DEMO_VKEY) || 'null') || JSON.parse(JSON.stringify(DEFAULT_VEHICLES)); } catch { state.vehicles = JSON.parse(JSON.stringify(DEFAULT_VEHICLES)); }
+  try { state.history = JSON.parse(localStorage.getItem(DEMO_HKEY) || 'null') || seedHistory(); } catch { state.history = seedHistory(); }
+  saveDemo();
+  onDataChange();
+}
+function saveDemo(){
+  localStorage.setItem(DEMO_VKEY, JSON.stringify(state.vehicles));
+  localStorage.setItem(DEMO_HKEY, JSON.stringify(state.history.slice(0, 500)));
+}
+
+async function persistVehicle(vehicle, isNew) {
+  const user = state.currentUser;
+  if (!user) throw new Error("Non authentifié");
+  if (state.demoMode) {
+    const idx = state.vehicles.findIndex(v => v.id === vehicle.id);
+    if (isNew || idx < 0) state.vehicles.push(vehicle);
+    else state.vehicles[idx] = vehicle;
+    saveDemo();
+    return vehicle.id;
+  }
+  const { doc, setDoc, collection } = fbFns.dbMod;
+  const newRef = doc(collection(fbDb, 'vehicles'));
+  const ref = isNew || !vehicle.id ? newRef : doc(fbDb, 'vehicles', vehicle.id);
+  const payload = { ...vehicle };
+  delete payload.id;
+  payload.updatedByEmail = user.email;
+  payload.updatedByUser = user.name;
+  payload.updatedAt = nowISO();
+  if (isNew) { payload.createdByEmail = user.email; payload.createdByUser = user.name; payload.createdAt = nowISO(); }
+  await setDoc(ref, payload, { merge: true });
+  return ref.id;
+}
+
+async function deleteVehicleDoc(id) {
+  if (state.demoMode) { state.vehicles = state.vehicles.filter(v => v.id !== id); saveDemo(); return; }
+  const { doc, deleteDoc } = fbFns.dbMod;
+  await deleteDoc(doc(fbDb, 'vehicles', id));
+}
+
+async function logHistory(entry) {
+  const user = state.currentUser;
+  if (!user) return;
+  const full = { ...entry, userEmail: user.email, userName: user.name, timestamp: nowISO() };
+  if (state.demoMode) {
+    state.history.unshift({ id: genId(), ...full });
+    if (state.history.length > 500) state.history = state.history.slice(0, 500);
+    saveDemo();
+    return;
+  }
+  const { addDoc, collection } = fbFns.dbMod;
+  await addDoc(collection(fbDb, 'history'), full);
+}
+
+async function clearHistoryDoc() {
+  if (state.demoMode) { state.history = []; saveDemo(); return; }
+  throw new Error("La suppression de l'historique est désactivée en mode sécurisé.");
+}
+
+/* =========================================================
+   FIREBASE
+   ========================================================= */
+let fbApp = null, fbAuth = null, fbDb = null;
+let FIREBASE_READY = false;
+let fbFns = {};
+
+try {
+  const configured = firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("REMPLACEZ");
+  if (configured) {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+    const authMod = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+    const dbMod   = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    fbApp = initializeApp(firebaseConfig);
+    fbAuth = authMod.getAuth(fbApp);
+    fbDb = dbMod.getFirestore(fbApp);
+    fbFns = { authMod, dbMod };
+    FIREBASE_READY = true;
+  }
+} catch(e) {
+  console.warn("Firebase non disponible :", e);
+  FIREBASE_READY = false;
+}
+
+/* =========================================================
+   AUTHENTIFICATION
+   ========================================================= */
+const loginScreen = document.getElementById('loginScreen');
+const roleScreen  = document.getElementById('roleScreen');
+const appEl       = document.getElementById('app');
+const USER_KEY    = 'autocare_current_user_v1';
+
+function showApp(){ loginScreen.style.display = 'none'; roleScreen.style.display = 'none'; appEl.style.display = 'block'; }
+function showLogin(){ appEl.style.display = 'none'; roleScreen.style.display = 'none'; loginScreen.style.display = 'flex'; }
+function showRoleSelector(){
+  appEl.style.display = 'none'; loginScreen.style.display = 'none'; roleScreen.style.display = 'flex';
+  const wrap = document.getElementById('roleUsers');
+  wrap.innerHTML = USERS.map(u => `
+    <button class="role-user" data-email="${u.email}">
+      <span class="dav" style="background:${u.color}">${u.initials}</span>
+      <span>
+        <span class="dname">${esc(u.name)}</span>
+      </span>
+      <span class="drole ${u.role}">${u.role === 'admin' ? 'Admin' : 'Membre'}</span>
+    </button>`).join('');
+  wrap.querySelectorAll('[data-email]').forEach(b => {
+    b.addEventListener('click', () => {
+      const u = USERS.find(x => x.email === b.dataset.email);
+      if (u) selectUser(u);
+    });
+  });
+}
+
+function setModeBadge(){
+  const el = document.getElementById('modeBadge');
+  if (!el) return;
+  el.className = 'mode-badge ' + (FIREBASE_READY ? 'live' : 'demo');
+  el.innerHTML = `<span class="dot"></span>${FIREBASE_READY ? 'Temps réel · Firebase' : 'Mode démo · local'}`;
+  const fm = document.getElementById('footMode');
+  if (fm) fm.textContent = FIREBASE_READY ? 'Synchronisation temps réel sécurisée' : 'Mode démo local (navigateur uniquement)';
+}
+
+function selectUser(u){
+  state.currentUser = { email:u.email, name:u.name, initials:u.initials, color:u.color, role:u.role };
+  localStorage.setItem(USER_KEY, u.email);
+  renderUsers();
+  setModeBadge();
+  showApp();
+  if (state.demoMode) {
+    loadDemoData();
+  } else if (FIREBASE_READY) {
+    startFirebaseSync();
+  }
+}
+
+async function startFirebaseSync(){
+  const { onSnapshot, collection, query, orderBy, limit } = fbFns.dbMod;
+  if (state.unsubVehicles) state.unsubVehicles();
+  if (state.unsubHistory) state.unsubHistory();
+  state.unsubVehicles = onSnapshot(query(collection(fbDb, 'vehicles')),
+    snap => { state.vehicles = snap.docs.map(s => ({ id:s.id, ...s.data() })); onDataChange(); },
+    err => { console.error(err); toast('Erreur de synchronisation', true); }
+  );
+  state.unsubHistory = onSnapshot(query(collection(fbDb, 'history'), orderBy('timestamp','desc'), limit(500)),
+    snap => { state.history = snap.docs.map(s => ({ id:s.id, ...s.data() })); if (document.getElementById('histOverlay').classList.contains('open')) renderHistoryTable(); },
+    err => { console.error(err); }
+  );
+}
+
+function initAuthFlow(){
+  if (!FIREBASE_READY) {
+    state.demoMode = true;
+    document.getElementById('loginFirebase').style.display = 'none';
+    document.getElementById('loginDemo').style.display = 'block';
+    const wrap = document.getElementById('demoUsers');
+    wrap.innerHTML = USERS.map(u => `
+      <button class="role-user" data-email="${u.email}">
+        <span class="dav" style="background:${u.color}">${u.initials}</span>
+        <span><span class="dname">${esc(u.name)}</span></span>
+        <span class="drole ${u.role}">${u.role === 'admin' ? 'Admin' : 'Membre'}</span>
+      </button>`).join('');
+    wrap.querySelectorAll('[data-email]').forEach(b => {
+      b.addEventListener('click', () => { const u = USERS.find(x => x.email === b.dataset.email); if (u) selectUser(u); });
+    });
+    showLogin();
+    setModeBadge();
+    return;
+  }
+
+  document.getElementById('loginFirebase').style.display = 'block';
+  document.getElementById('loginDemo').style.display = 'none';
+
+  const { signInWithEmailAndPassword, onAuthStateChanged, signOut } = fbFns.authMod;
+
+  onAuthStateChanged(fbAuth, (user) => {
+    if (user) {
+      state.demoMode = false;
+      // Si un utilisateur est déjà mémorisé pour ce compte, on le restaure
+      const stored = localStorage.getItem(USER_KEY);
+      if (stored) {
+        const u = USERS.find(x => x.email === stored);
+        if (u) { selectUser(u); return; }
+      }
+      // Sinon, on demande qui utilise l'app
+      showRoleSelector();
+    } else {
+      state.currentUser = null;
+      showLogin();
+    }
+  });
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const pwd = document.getElementById('loginPassword').value;
+    const errEl = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtn');
+    errEl.classList.remove('show');
+    btn.disabled = true; btn.textContent = 'Connexion…';
+    try {
+      await signInWithEmailAndPassword(fbAuth, email, pwd);
+    } catch (err) {
+      const msgs = {
+        'auth/invalid-credential': "E-mail ou mot de passe incorrect.",
+        'auth/user-not-found':     "Aucun compte avec cet e-mail.",
+        'auth/wrong-password':     "Mot de passe incorrect.",
+        'auth/too-many-requests':  "Trop de tentatives. Réessayez plus tard.",
+        'auth/invalid-email':      "Adresse e-mail invalide."
+      };
+      errEl.textContent = msgs[err.code] || ("Erreur : " + err.message);
+      errEl.classList.add('show');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Se connecter';
+    }
+  });
+
+  document.getElementById('btnLogout').addEventListener('click', async () => {
+    if (!confirm("Se déconnecter ?")) return;
+    localStorage.removeItem(USER_KEY);
+    try { await signOut(fbAuth); } catch(e) { console.error(e); }
+  });
+
+  document.getElementById('roleLogout').addEventListener('click', async () => {
+    localStorage.removeItem(USER_KEY);
+    try { await signOut(fbAuth); } catch(e) { console.error(e); }
+  });
+}
+
+/* =========================================================
+   STATUTS
+   ========================================================= */
+const RANK = { ok:0, soon:1, late:2 };
+const LABEL = { ok:'À jour', soon:'Bientôt', late:'En retard' };
+const COLOR = { ok:'#10b981', soon:'#f59e0b', late:'#ef4444' };
+const worstOf = arr => arr.reduce((a,b) => RANK[b] > RANK[a] ? b : a, 'ok');
+
+function computeItem(item, v){
+  let status = 'ok', dateInfo = null, kmInfo = null, wear = 0;
+  if (item.dueDate){
+    const days = daysUntil(item.dueDate);
+    dateInfo = { days };
+    const s = days < 0 ? 'late' : days <= 30 ? 'soon' : 'ok';
+    if (RANK[s] > RANK[status]) status = s;
+    if (item.since){
+      const total = (parseISO(item.dueDate) - parseISO(item.since)) / 86400000;
+      const used = (TODAY - parseISO(item.since)) / 86400000;
+      if (total > 0) wear = Math.max(wear, used / total);
+    }
+  }
+  if (item.dueKm != null){
+    const left = item.dueKm - v.km;
+    kmInfo = { left };
+    const s = left < 0 ? 'late' : left <= 2000 ? 'soon' : 'ok';
+    if (RANK[s] > RANK[status]) status = s;
+    if (item.lastKm != null){
+      const total = item.dueKm - item.lastKm;
+      if (total > 0) wear = Math.max(wear, (v.km - item.lastKm) / total);
+    }
+  }
+  return { status, dateInfo, kmInfo, wear: Math.min(Math.max(wear, 0), 1) };
+}
+const urgency = info => { const days = info.dateInfo ? info.dateInfo.days : Infinity; const kms = info.kmInfo ? info.kmInfo.left / 45 : Infinity; return Math.min(days, kms); };
+const relShort = info => {
+  if (info.dateInfo){ const dd = info.dateInfo.days; if (dd < 0) return `${Math.abs(dd)} j de retard`; if (dd === 0) return `aujourd'hui`; return `dans ${dd} j`; }
+  const k = info.kmInfo.left; return k < 0 ? `${fmtNum(Math.abs(k))} km de trop` : `dans ${fmtNum(k)} km`;
+};
+const relLong = info => {
+  const parts = [];
+  if (info.dateInfo){ const dd = info.dateInfo.days; parts.push(dd < 0 ? `dépassé de ${Math.abs(dd)} j` : dd === 0 ? `aujourd'hui` : `dans ${dd} j`); }
+  if (info.kmInfo){ const k = info.kmInfo.left; parts.push(k < 0 ? `${fmtNum(Math.abs(k))} km de trop` : `dans ${fmtNum(k)} km`); }
+  return parts.join(' · ');
+};
+
+/* =========================================================
+   ICÔNES
+   ========================================================= */
+const ICONS = {
+  car: `<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14"/><path d="M3 17v-4.2c0-.4.1-.8.3-1.1L5.6 7c.4-.6 1-.9 1.7-.9h9.4c.7 0 1.3.3 1.7.9l2.3 4.7c.2.3.3.7.3 1.1V17"/><circle cx="7" cy="17.6" r="1.7"/><circle cx="17" cy="17.6" r="1.7"/><path d="M3.6 12.6h16.8"/></svg>`,
+  moto: `<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="2.8"/><circle cx="18.5" cy="17.5" r="2.8"/><path d="M5.5 17.5 9.5 11h5l4 6.5"/><path d="M14 11l2.2-3.2h2.4"/></svg>`,
+  edit: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`,
+  dup: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`,
+  trash: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>`,
+  clock: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`
+};
+
+/* =========================================================
+   UTILISATEURS — RENDU
+   ========================================================= */
+function renderUsers(){
+  const el = document.getElementById('avatars');
+  const me = state.currentUser;
+  el.innerHTML = USERS.map(u => {
+    const active = me && u.email.toLowerCase() === me.email.toLowerCase();
+    return `<button class="avatar ${active ? 'active' : ''}" data-user="${u.email}" title="${esc(u.name)}${u.role === 'admin' ? ' (Admin)' : ''}" style="background:${u.color}">${u.initials}</button>`;
+  }).join('');
+
+  // En mode démo OU Firebase, cliquer sur un avatar change d'utilisateur
+  el.querySelectorAll('[data-user]').forEach(b => {
+    b.addEventListener('click', () => {
+      const u = USERS.find(x => x.email === b.dataset.user);
+      if (u && (!me || u.email !== me.email)) {
+        selectUser(u);
+        toast('Vous êtes maintenant ' + u.name + (u.role === 'admin' ? ' (Admin)' : ' (Membre)'));
+      }
+    });
+  });
+
+  const badge = me ? `<span class="role-tag ${me.role}">${me.role === 'admin' ? 'Admin' : 'Membre'}</span>` : '';
+  document.getElementById('you').innerHTML = me ? `Connecté : <b>${esc(me.name)}</b> ${badge}` : '';
+
+  // Afficher ou masquer les boutons admin
+  document.getElementById('btn-new').classList.toggle('hidden', !canCreateVehicle());
+}
+
+/* =========================================================
+   KPI / GRILLE
+   ========================================================= */
+function renderKPIs(){
+  const overalls = state.vehicles.map(v => v.items.length ? worstOf(v.items.map(it => computeItem(it, v).status)) : 'ok');
+  const count = s => overalls.filter(o => o === s).length;
+  const data = [
+    { label:'Véhicules', value:state.vehicles.length, icon:'🚘', bg:'#eef2ff', color:'#4f46e5' },
+    { label:'À jour', value:count('ok'), icon:'✅', bg:'#e6f8f0', color:'#0b7a55' },
+    { label:'À surveiller', value:count('soon'), icon:'⏳', bg:'#fef4e3', color:'#a35a06' },
+    { label:'En retard', value:count('late'), icon:'⚠️', bg:'#fdeaea', color:'#b91c1c' }
+  ];
+  document.getElementById('kpis').innerHTML = data.map(k => `
+    <div class="kpi"><div class="kpi-ico" style="background:${k.bg};color:${k.color}">${k.icon}</div>
+    <div><small>${k.label}</small><strong>${k.value}</strong></div></div>`).join('');
+  document.getElementById('c-all').textContent  = state.vehicles.length;
+  document.getElementById('c-car').textContent  = state.vehicles.filter(v => v.type === 'car').length;
+  document.getElementById('c-moto').textContent = state.vehicles.filter(v => v.type === 'moto').length;
+  document.getElementById('stamp').innerHTML = `Mise à jour : <b>${TODAY.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })}</b>`;
+}
+
+function cardHTML(v, index){
+  const items = v.items.map(it => ({ ...it, info: computeItem(it, v) }));
+  const overall = items.length ? worstOf(items.map(i => i.info.status)) : 'ok';
+  const sorted = items.slice().sort((a,b) => urgency(a.info) - urgency(b.info));
+  const top = sorted.slice(0, 3);
+  const next = sorted[0];
+  const admin = isAdmin();
+
+  return `
+  <article class="vcard" style="--accent:${v.accent};--soft:${v.soft};animation-delay:${index*60}ms">
+    <div class="vtop">
+      <div class="vicon">${ICONS[v.type] || ICONS.car}</div>
+      <div style="flex:1;min-width:0">
+        <h3>${esc(v.name)}</h3>
+        <p>${esc(v.plate)} · ${v.year} · ${esc(v.fuel)}</p>
+      </div>
+      <span class="badge ${overall}">${LABEL[overall]}</span>
+    </div>
+    <div class="vstats">
+      <div><span>Kilométrage</span><strong>${fmtNum(v.km)} km</strong></div>
+      <div><span>Prochain</span><strong title="${esc(next ? next.label : '')}">${next ? esc(next.label) : '—'}</strong></div>
+    </div>
+    <div class="mini">
+      ${top.length ? top.map(it => `
+        <div class="mini-row">
+          <div class="mini-ico">${esc(it.emoji || '🔧')}</div>
+          <div class="mini-name">${esc(it.label)}</div>
+          <div class="mini-val ${it.info.status}">${relShort(it.info)}</div>
+        </div>`).join('') : `<div style="font-size:12px;color:var(--muted);padding:6px 0">Aucun entretien.</div>`}
+    </div>
+    <div class="card-actions">
+      <button class="btn-detail" data-open="${v.id}">Voir le détail
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <button class="btn-ico" data-edit="${v.id}" title="Modifier">${ICONS.edit}</button>
+      <button class="btn-ico ${admin ? '' : 'hidden'}" data-dup="${v.id}" title="Dupliquer">${ICONS.dup}</button>
+      <button class="btn-ico btn-danger ${admin ? '' : 'hidden'}" data-del="${v.id}" title="Supprimer">${ICONS.trash}</button>
+    </div>
+  </article>`;
+}
+
+function renderGrid(){
+  const list = state.vehicles.filter(v => state.filter === 'all' || v.type === state.filter);
+  const grid = document.getElementById('grid');
+  if (!list.length){
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 10px;color:var(--muted);font-size:13.5px">Aucun véhicule.${canCreateVehicle() ? ' Cliquez sur « Nouveau véhicule » pour en ajouter un.' : ''}</div>`;
+    return;
+  }
+  grid.innerHTML = list.map((v,i) => cardHTML(v,i)).join('');
+  grid.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => openDetail(b.dataset.open)));
+  grid.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openEdit(b.dataset.edit)));
+  grid.querySelectorAll('[data-dup]').forEach(b => b.addEventListener('click', () => duplicateVehicle(b.dataset.dup)));
+  grid.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => deleteVehicle(b.dataset.del)));
+}
+
+/* =========================================================
+   SYNCHRONISATION
+   ========================================================= */
+function onDataChange(){
+  renderKPIs();
+  renderGrid();
+  if (document.getElementById('overlay').classList.contains('open') && detailState.id){
+    const v = state.vehicles.find(x => x.id === detailState.id);
+    if (v){
+      detailState.vehicle = v;
+      detailState.items = v.items.map(it => ({ ...it, info: computeItem(it, v) }))
+        .sort((a,b) => RANK[b.info.status] - RANK[a.info.status] || urgency(a.info) - urgency(b.info));
+      renderDetail();
+    } else closeDetail();
+  }
+  if (document.getElementById('histOverlay').classList.contains('open')) renderHistoryTable();
+}
+
+/* =========================================================
+   SUPPRESSION (admin uniquement)
+   ========================================================= */
+async function deleteVehicle(id){
+  if (!canDeleteVehicle()){ toast('Seul un administrateur peut supprimer un véhicule', true); return; }
+  const v = state.vehicles.find(x => x.id === id);
+  if (!v) return;
+  if (!confirm(`Supprimer définitivement « ${v.name} » (${v.plate}) ?\n\nLes ${v.items.length} entretien(s) associés seront supprimés.\nL'historique est conservé.`)) return;
+  try {
+    await logHistory({ action:'delete_vehicle', vehicleName:v.name, vehiclePlate:v.plate, details:`${v.items.length} entretien(s) supprimé(s)` });
+    await deleteVehicleDoc(id);
+    closeDetail();
+    if (!FIREBASE_READY) onDataChange();
+    toast(`« ${v.name} » supprimé`);
+  } catch(e) {
+    console.error(e);
+    toast("Suppression refusée : " + e.message, true);
+  }
+}
+
+/* =========================================================
+   DÉTAIL
+   ========================================================= */
+let detailState = { id:null, items:[], filter:'all', vehicle:null };
+
+function openDetail(id){
+  const v = state.vehicles.find(x => x.id === id);
+  if (!v) return;
+  const items = v.items.map(it => ({ ...it, info: computeItem(it, v) }))
+    .sort((a,b) => RANK[b.info.status] - RANK[a.info.status] || urgency(a.info) - urgency(b.info));
+  detailState = { id, items, filter:'all', vehicle:v };
+  renderDetail();
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function renderDetail(){
+  const v = detailState.vehicle;
+  const items = detailState.items;
+  const overall = items.length ? worstOf(items.map(i => i.info.status)) : 'ok';
+  const count = s => items.filter(i => i.info.status === s).length;
+  const f = detailState.filter;
+  const admin = isAdmin();
+
+  const metaParts = [];
+  if (v.createdByUser || v.createdByEmail) metaParts.push(`Créé par <b>${esc(v.createdByUser || nameFromEmail(v.createdByEmail))}</b>`);
+  if (v.updatedByUser || v.updatedByEmail) metaParts.push(`modifié par <b>${esc(v.updatedByUser || nameFromEmail(v.updatedByEmail))}</b>${v.updatedAt ? ' le ' + fmtWhen(v.updatedAt) : ''}`);
+  const metaHTML = metaParts.length ? `<div class="mmeta">${metaParts.join(' · ')}</div>` : '';
+
+  const visible = f === 'all' ? items : items.filter(i => i.info.status === f);
+  const listHTML = visible.length ? visible.map(itemRowHTML).join('')
+    : `<div class="dempty"><span>🗂️</span>Aucun entretien « ${LABEL[f]} » pour ce véhicule.</div>`;
+
+  document.getElementById('modal').innerHTML = `
+    <div class="mhead" style="--accent:${v.accent}">
+      <div class="vicon">${ICONS[v.type] || ICONS.car}</div>
+      <div style="flex:1;min-width:0">
+        <h2>${esc(v.name)}</h2>
+        <p>${esc(v.plate)} · ${v.year} · ${esc(v.fuel)} · ${fmtNum(v.km)} km</p>
+        ${metaHTML}
+      </div>
+      <span class="badge ${overall}">${LABEL[overall]}</span>
+      <div class="mhead-actions">
+        <button class="mhbtn" id="m-history" title="Historique de ce véhicule">${ICONS.clock}</button>
+        <button class="mhbtn" id="m-edit" title="Modifier">${ICONS.edit}</button>
+        <button class="mhbtn danger ${admin ? '' : 'hidden'}" id="m-delete" title="Supprimer">${ICONS.trash}</button>
+        <button class="mhbtn" id="mclose" title="Fermer">×</button>
+      </div>
+    </div>
+    <div class="mbody">
+      <div class="dpills" id="dpills">
+        <button class="pill ${f==='all'?'active':''}" data-df="all">Tous <span>${items.length}</span></button>
+        <button class="pill ${f==='ok'?'active':''}" data-df="ok">À jour <span>${count('ok')}</span></button>
+        <button class="pill ${f==='soon'?'active':''}" data-df="soon">Bientôt <span>${count('soon')}</span></button>
+        <button class="pill ${f==='late'?'active':''}" data-df="late">En retard <span>${count('late')}</span></button>
+      </div>
+      <div id="dlist">${listHTML}</div>
+    </div>`;
+
+  document.querySelectorAll('#dpills .pill').forEach(b => b.addEventListener('click', () => { detailState.filter = b.dataset.df; renderDetail(); }));
+  document.getElementById('mclose').addEventListener('click', closeDetail);
+  document.getElementById('m-edit').addEventListener('click', () => openEdit(v.id));
+  const delBtn = document.getElementById('m-delete');
+  if (delBtn) delBtn.addEventListener('click', () => deleteVehicle(v.id));
+  document.getElementById('m-history').addEventListener('click', () => { const n = v.name; closeDetail(); openHistory(n); });
+}
+
+function itemRowHTML(it){
+  const info = it.info;
+  const pct = Math.round(info.wear * 100);
+  const lastParts = [];
+  if (it.lastKm != null) lastParts.push(`${fmtNum(it.lastKm)} km`);
+  if (it.since) lastParts.push(fmtDate(it.since));
+  const nextParts = [];
+  if (it.dueKm != null) nextParts.push(`${fmtNum(it.dueKm)} km`);
+  if (it.dueDate) nextParts.push(fmtDate(it.dueDate));
+  let meta = '';
+  if (it.updatedByUser || it.updatedByEmail){
+    meta = `<div class="imeta">✏️ Modifié par <b>${esc(it.updatedByUser || nameFromEmail(it.updatedByEmail))}</b>${it.updatedAt ? ' · ' + fmtWhen(it.updatedAt) : ''}</div>`;
+  } else if (it.createdByUser || it.createdByEmail){
+    meta = `<div class="imeta">➕ Ajouté par <b>${esc(it.createdByUser || nameFromEmail(it.createdByEmail))}</b>${it.createdAt ? ' · ' + fmtWhen(it.createdAt) : ''}</div>`;
+  }
+  return `
+  <div class="irow">
+    <div class="iico">${esc(it.emoji || '🔧')}</div>
+    <div class="imain">
+      <div class="itop">
+        <span class="iname">${esc(it.label)}</span>
+        <span class="badge ${info.status}">${LABEL[info.status]}</span>
+      </div>
+      <div class="bar"><i style="width:${pct}%;background:${COLOR[info.status]}"></i></div>
+      <div class="isub">
+        <span>${lastParts.length ? `Dernier : <b>${lastParts.join(' · ')}</b>` : '&nbsp;'}</span>
+        <span>Prochain : <b>${nextParts.join(' · ') || '—'}</b>${nextParts.length ? ' — ' + relLong(info) : ''}</span>
+      </div>
+      ${meta}
+    </div>
+  </div>`;
+}
+
+function closeDetail(){
+  document.getElementById('overlay').classList.remove('open');
+  if (!document.getElementById('editOverlay').classList.contains('open') && !document.getElementById('histOverlay').classList.contains('open'))
+    document.body.style.overflow = '';
+}
+
+/* =========================================================
+   ÉDITION / CRÉATION
+   ========================================================= */
+let editingId = null, editUidSeq = 0, editOriginals = new Map(), editIsDuplicate = false;
+
+function openEdit(id){
+  closeDetail();
+  const v = state.vehicles.find(x => x.id === id);
+  if (!v) return;
+  editingId = id; editIsDuplicate = false;
+  buildEditor(v, 'edit');
+}
+function openCreate(seed){
+  if (!canCreateVehicle()){ toast('Seul un administrateur peut créer un véhicule', true); return; }
+  closeDetail();
+  editingId = null; editIsDuplicate = false;
+  buildEditor(seed || { type:'car', name:'', plate:'', year:new Date().getFullYear(), km:0, fuel:'Essence', accent:'#4f46e5', items:[] }, 'create');
+}
+function duplicateVehicle(id){
+  if (!canDuplicateVehicle()){ toast('Seul un administrateur peut dupliquer un véhicule', true); return; }
+  const v = state.vehicles.find(x => x.id === id);
+  if (!v) return;
+  const copy = JSON.parse(JSON.stringify(v));
+  delete copy.id; delete copy.updatedByEmail; delete copy.updatedByUser; delete copy.updatedAt; delete copy.createdByEmail; delete copy.createdByUser; delete copy.createdAt;
+  copy.name = v.name + ' (copie)';
+  closeDetail();
+  editingId = null; editIsDuplicate = true;
+  buildEditor(copy, 'create');
+}
+
+function buildEditor(v, mode){
+  const isCreate = mode === 'create';
+  const type = v.type || 'car';
+  const accent = v.accent || '#4f46e5';
+  const soft = v.soft || tint(accent, .12);
+  const me = state.currentUser;
+  const admin = isAdmin();
+
+  editUidSeq = 0; editOriginals = new Map();
+  const itemsHTML = (v.items || []).map(it => {
+    const uid = 'u' + (++editUidSeq);
+    editOriginals.set(uid, JSON.parse(JSON.stringify(it)));
+    return itemEditHTML(it, uid);
+  }).join('');
+
+  const subtitle = isCreate
+    ? `Nouveau véhicule${editIsDuplicate ? ' (duplication)' : ''} · créé par <b>${esc(me.name)}</b>`
+    : `${esc(v.plate)} · vous modifiez en tant que <b>${esc(me.name)}</b>`;
+
+  const notice = (!isCreate && !admin)
+    ? `<div class="notice">Vous êtes connecté en tant que <b>Membre</b>. Vous pouvez modifier les détails du véhicule et ses entretiens, mais seul un administrateur peut créer, supprimer ou dupliquer un véhicule.</div>`
+    : '';
+
+  document.getElementById('editModal').innerHTML = `
+    <div class="ehead" style="--accent:${accent};--soft:${soft}">
+      <div class="eico">${ICONS[type] || ICONS.car}</div>
+      <div style="flex:1;min-width:0">
+        <h2>${isCreate ? (editIsDuplicate ? 'Dupliquer le véhicule' : 'Nouveau véhicule') : 'Modifier · ' + esc(v.name)}</h2>
+        <p>${subtitle}</p>
+      </div>
+      <button class="eclose" id="eclose" title="Fermer">×</button>
+    </div>
+    <div class="ebody">
+      ${notice}
+      <div class="esection">
+        <h3>Informations du véhicule</h3>
+        <div class="egrid">
+          <label>Nom <input id="e-name" value="${esc(v.name || '')}"></label>
+          <label>Immatriculation <input id="e-plate" value="${esc(v.plate || '')}"></label>
+          <label>Type
+            <select id="e-type">
+              <option value="car"  ${type==='car'?'selected':''}>Voiture</option>
+              <option value="moto" ${type==='moto'?'selected':''}>Moto</option>
+            </select>
+          </label>
+          <label>Carburant <input id="e-fuel" value="${esc(v.fuel || '')}"></label>
+          <label>Année <input id="e-year" type="number" min="1980" max="2100" value="${v.year || new Date().getFullYear()}"></label>
+          <label>Kilométrage (km) <input id="e-km" type="number" min="0" value="${v.km || 0}"></label>
+          <label style="grid-column:1/-1">Couleur d'accent <input id="e-accent" type="color" value="${accent}"></label>
+        </div>
+      </div>
+      <div class="esection">
+        <h3 id="e-items-title">Entretiens (${(v.items||[]).length})</h3>
+        <div id="e-items">${itemsHTML}</div>
+        <button class="btn-add" id="e-add">+ Ajouter un entretien</button>
+      </div>
+    </div>
+    <div class="efoot">
+      <button class="btn-cancel" id="e-cancel">Annuler</button>
+      <button class="btn-save" id="e-save">${isCreate ? 'Créer le véhicule' : 'Enregistrer'}</button>
+    </div>`;
+
+  document.getElementById('editOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('eclose').addEventListener('click', closeEdit);
+  document.getElementById('e-cancel').addEventListener('click', closeEdit);
+  document.getElementById('e-save').addEventListener('click', saveEdit);
+  document.getElementById('e-add').addEventListener('click', () => {
+    const uid = 'u' + (++editUidSeq);
+    editOriginals.set(uid, null);
+    const wrap = document.getElementById('e-items');
+    wrap.insertAdjacentHTML('beforeend', itemEditHTML({}, uid));
+    updateItemsCount();
+    const last = wrap.lastElementChild;
+    last.querySelector('.eitem-label').focus();
+    last.scrollIntoView({ behavior:'smooth', block:'center' });
+  });
+  const list = document.getElementById('e-items');
+  list.addEventListener('click', e => {
+    const del = e.target.closest('.eitem-del');
+    if (!del) return;
+    const card = del.closest('.eitem');
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(-10px)';
+    setTimeout(() => { card.remove(); updateItemsCount(); }, 180);
+  });
+  list.addEventListener('input', e => { const card = e.target.closest('.eitem'); if (card) card.style.borderColor = ''; });
+}
+
+function updateItemsCount(){
+  const n = document.querySelectorAll('#e-items .eitem').length;
+  const t = document.getElementById('e-items-title');
+  if (t) t.textContent = `Entretiens (${n})`;
+}
+
+function itemEditHTML(it, uid){
+  return `
+  <div class="eitem" data-uid="${uid}">
+    <div class="eitem-top">
+      <input class="eitem-emoji" value="${esc(it.emoji || '')}" maxlength="4" placeholder="🔧">
+      <input class="eitem-label" value="${esc(it.label || '')}" placeholder="Nom de l'entretien">
+      <button class="eitem-del" title="Supprimer">🗑️</button>
+    </div>
+    <div class="eitem-grid">
+      <label>Dernier km <input type="number" min="0" class="eitem-lastKm" value="${it.lastKm ?? ''}"></label>
+      <label>Prochain km <input type="number" min="0" class="eitem-dueKm" value="${it.dueKm ?? ''}"></label>
+      <label>Dernière date <input type="date" class="eitem-since" value="${it.since || ''}"></label>
+      <label>Échéance <input type="date" class="eitem-dueDate" value="${it.dueDate || ''}"></label>
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   SAUVEGARDE
+   ========================================================= */
+async function saveEdit(){
+  const me = state.currentUser;
+  const nameEl = document.getElementById('e-name');
+  const name = nameEl.value.trim();
+  if (!name){ nameEl.style.borderColor = '#ef4444'; nameEl.focus(); toast('Le nom est obligatoire', true); return; }
+
+  const cards = [...document.querySelectorAll('#e-items .eitem')];
+  const raws = cards.map(el => ({
+    uid: el.dataset.uid, el,
+    raw: {
+      label: el.querySelector('.eitem-label').value.trim(),
+      emoji: el.querySelector('.eitem-emoji').value.trim(),
+      lastKm: el.querySelector('.eitem-lastKm').value.trim(),
+      dueKm: el.querySelector('.eitem-dueKm').value.trim(),
+      since: el.querySelector('.eitem-since').value,
+      dueDate: el.querySelector('.eitem-dueDate').value
+    }
+  })).filter(x => x.raw.label !== '');
+
+  cards.forEach(el => el.style.borderColor = '');
+  const seen = new Map(), dupUids = [];
+  let dupLabel = '';
+  raws.forEach(({ raw, uid, el }) => {
+    const key = raw.label.toLowerCase();
+    if (seen.has(key)){ dupUids.push(uid, seen.get(key)); el.style.borderColor = '#ef4444'; if (!dupLabel) dupLabel = raw.label; }
+    else seen.set(key, uid);
+  });
+  if (dupUids.length){
+    dupUids.forEach(uid => { const el = document.querySelector(`#e-items .eitem[data-uid="${uid}"]`); if (el) el.style.borderColor = '#ef4444'; });
+    toast(`« ${dupLabel} » existe déjà — doublon non autorisé`, true);
+    return;
+  }
+
+  const formUids = new Set(raws.map(r => r.uid));
+  const items = raws.map(({ uid, raw }) => {
+    const orig = editOriginals.get(uid);
+    const item = { label: raw.label, emoji: raw.emoji || '🔧' };
+    if (raw.lastKm !== '') item.lastKm = Number(raw.lastKm);
+    if (raw.dueKm !== '') item.dueKm = Number(raw.dueKm);
+    if (raw.since) item.since = raw.since;
+    if (raw.dueDate) item.dueDate = raw.dueDate;
+    if (!orig){ item.createdByEmail = me.email; item.createdByUser = me.name; item.createdAt = nowISO(); }
+    else {
+      if (orig.createdByEmail) item.createdByEmail = orig.createdByEmail;
+      if (orig.createdByUser) item.createdByUser = orig.createdByUser;
+      if (orig.createdAt) item.createdAt = orig.createdAt;
+      const changed = ['label','emoji','lastKm','dueKm','since','dueDate'].some(f => norm(orig[f]) !== norm(raw[f]));
+      if (changed){ item.updatedByEmail = me.email; item.updatedByUser = me.name; item.updatedAt = nowISO(); }
+      else if (orig.updatedByEmail){ item.updatedByEmail = orig.updatedByEmail; item.updatedByUser = orig.updatedByUser; item.updatedAt = orig.updatedAt; }
+    }
+    return item;
+  });
+
+  const accent = document.getElementById('e-accent').value || '#4f46e5';
+  const data = {
+    name,
+    plate: document.getElementById('e-plate').value.trim(),
+    type: document.getElementById('e-type').value,
+    fuel: document.getElementById('e-fuel').value.trim(),
+    year: Number(document.getElementById('e-year').value) || new Date().getFullYear(),
+    km: Math.max(0, Number(document.getElementById('e-km').value) || 0),
+    accent,
+    soft: tint(accent, .12),
+    items
+  };
+
+  const wasId = editingId;
+  const isNewDoc = !wasId;
+
+  if (isNewDoc && !canCreateVehicle()){ toast('Action réservée à l\'administrateur', true); return; }
+
+  try {
+    if (isNewDoc){
+      data.id = genId();
+      await persistVehicle(data, true);
+      await logHistory({ action: editIsDuplicate ? 'duplicate_vehicle' : 'create_vehicle', vehicleName:data.name, vehiclePlate:data.plate, details:`${items.length} entretien(s)` });
+    } else {
+      const v = state.vehicles.find(x => x.id === wasId);
+      if (v){
+        const fieldLabels = { name:'Nom', plate:'Immatriculation', type:'Type', fuel:'Carburant', year:'Année', km:'Kilométrage', accent:'Couleur' };
+        const changes = [];
+        ['name','plate','type','fuel','year','km','accent'].forEach(f => { if (norm(v[f]) !== norm(data[f])) changes.push(`${fieldLabels[f] || f} : ${v[f] || '—'} → ${data[f] || '—'}`); });
+        if (changes.length) await logHistory({ action:'edit_vehicle', vehicleName:data.name, vehiclePlate:data.plate, details:changes.join(' · ') });
+
+        editOriginals.forEach((orig, uid) => {
+          if (orig !== null && !formUids.has(uid)){
+            logHistory({ action:'remove_item', vehicleName:data.name, vehiclePlate:data.plate, itemName:orig.label, details:`Dernier : ${orig.lastKm ?? '—'} km · Prochain : ${orig.dueKm ?? '—'} km` });
+          }
+        });
+        raws.forEach(({ uid, raw }) => {
+          const orig = editOriginals.get(uid);
+          if (!orig){
+            logHistory({ action:'add_item', vehicleName:data.name, vehiclePlate:data.plate, itemName:raw.label, details:`Prochain : ${raw.dueKm || '—'} km${raw.dueDate ? ' · ' + raw.dueDate : ''}` });
+          } else {
+            const ch = [];
+            if (norm(orig.label) !== norm(raw.label)) ch.push(`Libellé : ${orig.label} → ${raw.label}`);
+            if (norm(orig.lastKm) !== norm(raw.lastKm)) ch.push(`Dernier km : ${orig.lastKm ?? '—'} → ${raw.lastKm || '—'}`);
+            if (norm(orig.dueKm) !== norm(raw.dueKm)) ch.push(`Prochain km : ${orig.dueKm ?? '—'} → ${raw.dueKm || '—'}`);
+            if (norm(orig.since) !== norm(raw.since)) ch.push(`Dernière date : ${orig.since ? fmtDate(orig.since) : '—'} → ${raw.since ? fmtDate(raw.since) : '—'}`);
+            if (norm(orig.dueDate) !== norm(raw.dueDate)) ch.push(`Échéance : ${orig.dueDate ? fmtDate(orig.dueDate) : '—'} → ${raw.dueDate ? fmtDate(raw.dueDate) : '—'}`);
+            if (ch.length) logHistory({ action:'edit_item', vehicleName:data.name, vehiclePlate:data.plate, itemName:raw.label, details:ch.join(' · ') });
+          }
+        });
+
+        data.id = wasId;
+        await persistVehicle(data, false);
+      }
+    }
+    closeEdit();
+    if (!FIREBASE_READY) onDataChange();
+    toast(isNewDoc ? `Véhicule ${editIsDuplicate ? 'dupliqué' : 'créé'} ✓` : `Modifications enregistrées ✓`);
+    if (!isNewDoc) setTimeout(() => openDetail(wasId), 300);
+  } catch(e) {
+    console.error(e);
+    toast("Enregistrement refusé : " + (e.message || "erreur inconnue"), true);
+  }
+}
+
+function closeEdit(){
+  document.getElementById('editOverlay').classList.remove('open');
+  editingId = null; editIsDuplicate = false;
+  if (!document.getElementById('overlay').classList.contains('open') && !document.getElementById('histOverlay').classList.contains('open'))
+    document.body.style.overflow = '';
+}
+
+/* =========================================================
+   HISTORIQUE
+   ========================================================= */
+function openHistory(vehicleFilter){
+  buildHistoryModal(vehicleFilter);
+  document.getElementById('histOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function buildHistoryModal(vehicleFilter){
+  const users = [...new Set(state.history.map(h => h.userEmail).filter(Boolean))].sort((a,b) => nameFromEmail(a).localeCompare(nameFromEmail(b), 'fr'));
+  const vehicles = [...new Set(state.history.map(h => h.vehicleName).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'fr'));
+  const actions = [...new Set(state.history.map(h => h.action).filter(Boolean))].sort((a,b) => (ACTION_META[a]?.label || a).localeCompare(ACTION_META[b]?.label || b, 'fr'));
+  const clearBtnHTML = state.demoMode ? `<button class="btn-clear" id="hclear">Effacer l'historique</button>` : `<span style="font-size:11px;color:#94a3b8;font-weight:600">Historique en lecture seule (sécurité)</span>`;
+
+  document.getElementById('histModal').innerHTML = `
+    <div class="ehead" style="--accent:#4f46e5;--soft:#eef2ff">
+      <div class="eico">${ICONS.clock}</div>
+      <div style="flex:1;min-width:0">
+        <h2>Historique des changements</h2>
+        <p>${vehicleFilter ? `Filtré sur : <b>${esc(vehicleFilter)}</b>` : 'Toutes les modifications effectuées sur le parc'}</p>
+      </div>
+      <button class="eclose" id="hclose" title="Fermer">×</button>
+    </div>
+    <div class="hbody">
+      <div class="hist-table-wrap">
+        <table class="hist-table">
+          <thead>
+            <tr>
+              <th style="width:130px">Date</th>
+              <th style="width:140px">Utilisateur</th>
+              <th style="width:180px">Action</th>
+              <th style="width:170px">Véhicule</th>
+              <th style="width:150px">Entretien</th>
+              <th>Détails</th>
+            </tr>
+            <tr class="filters">
+              <th><input id="hf-date" class="hf" placeholder="ex: 12 oct"></th>
+              <th><select id="hf-user" class="hf"><option value="">Tous</option>${users.map(e => `<option value="${esc(e)}">${esc(nameFromEmail(e))}</option>`).join('')}</select></th>
+              <th><select id="hf-action" class="hf"><option value="">Toutes</option>${actions.map(a => `<option value="${a}">${ACTION_META[a]?.label || a}</option>`).join('')}</select></th>
+              <th><select id="hf-vehicle" class="hf"><option value="">Tous</option>${vehicles.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}</select></th>
+              <th><input id="hf-item" class="hf" placeholder="Filtrer..."></th>
+              <th><input id="hf-details" class="hf" placeholder="Filtrer..."></th>
+            </tr>
+          </thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="hist-foot">
+      <div class="hist-count" id="histCount"></div>
+      <div class="hist-foot-right">${clearBtnHTML}<button class="btn-close-hist" id="hclose2">Fermer</button></div>
+    </div>`;
+
+  if (vehicleFilter){
+    const sel = document.getElementById('hf-vehicle');
+    if (sel){
+      if (![...sel.options].some(o => o.value === vehicleFilter)){
+        const opt = document.createElement('option'); opt.value = vehicleFilter; opt.textContent = vehicleFilter; sel.appendChild(opt);
+      }
+      sel.value = vehicleFilter;
+    }
+  }
+  ['hf-date','hf-user','hf-action','hf-vehicle','hf-item','hf-details'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', renderHistoryTable);
+    el.addEventListener('change', renderHistoryTable);
+  });
+  document.getElementById('hclose').addEventListener('click', closeHistory);
+  document.getElementById('hclose2').addEventListener('click', closeHistory);
+  if (state.demoMode){
+    document.getElementById('hclear').addEventListener('click', async () => {
+      if (!confirm("Effacer tout l'historique ? Action irréversible.")) return;
+      try { await clearHistoryDoc(); renderHistoryTable(); onDataChange(); toast('Historique effacé'); }
+      catch(e){ toast(e.message, true); }
+    });
+  }
+  renderHistoryTable();
+}
+
+function readFilters(){
+  return {
+    date: (document.getElementById('hf-date')?.value || '').toLowerCase().trim(),
+    user: document.getElementById('hf-user')?.value || '',
+    action: document.getElementById('hf-action')?.value || '',
+    vehicle: document.getElementById('hf-vehicle')?.value || '',
+    item: (document.getElementById('hf-item')?.value || '').toLowerCase().trim(),
+    details: (document.getElementById('hf-details')?.value || '').toLowerCase().trim()
+  };
+}
+
+function renderHistoryTable(){
+  const f = readFilters();
+  const list = state.history.filter(h => {
+    if (f.user && h.userEmail !== f.user) return false;
+    if (f.action && h.action !== f.action) return false;
+    if (f.vehicle && h.vehicleName !== f.vehicle) return false;
+    if (f.item && !(h.itemName || '').toLowerCase().includes(f.item)) return false;
+    if (f.details && !(h.details || '').toLowerCase().includes(f.details)) return false;
+    if (f.date){
+      const dt = new Date(h.timestamp);
+      const s1 = dt.toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }).toLowerCase();
+      const s2 = dt.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }).toLowerCase();
+      if (!s1.includes(f.date) && !s2.includes(f.date)) return false;
+    }
+    return true;
+  }).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  const count = document.getElementById('histCount');
+  if (count) count.innerHTML = `<b>${list.length}</b> entrée(s)${list.length !== state.history.length ? ` sur ${state.history.length}` : ''}`;
+
+  const body = document.getElementById('histBody');
+  if (!list.length){ body.innerHTML = `<tr class="hist-empty"><td colspan="6"><span>🔍</span>Aucun résultat avec ces filtres.</td></tr>`; return; }
+
+  body.innerHTML = list.map(h => {
+    const dt = new Date(h.timestamp);
+    const dateStr = dt.toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+    const timeStr = dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const meta = ACTION_META[h.action] || { label:h.action, bg:'#f4f6fb', color:'#475569' };
+    const uColor = colorFromEmail(h.userEmail);
+    const uInit = initialsFromEmail(h.userEmail);
+    const uName = h.userName || nameFromEmail(h.userEmail);
+    return `
+    <tr>
+      <td><div class="hist-date"><b>${esc(dateStr)}</b><span>${timeStr}</span></div></td>
+      <td><div class="hist-user"><span class="hist-avatar" style="background:${uColor}">${uInit}</span><span>${esc(uName)}</span></div></td>
+      <td><span class="hist-badge" style="background:${meta.bg};color:${meta.color}">${esc(meta.label)}</span></td>
+      <td><div class="hist-veh"><b>${esc(h.vehicleName || '—')}</b>${h.vehiclePlate ? `<span>${esc(h.vehiclePlate)}</span>` : ''}</div></td>
+      <td class="hist-item">${h.itemName ? esc(h.itemName) : '<span style="color:#cbd5e1">—</span>'}</td>
+      <td class="hist-details">${esc(h.details || '')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function closeHistory(){
+  document.getElementById('histOverlay').classList.remove('open');
+  if (!document.getElementById('overlay').classList.contains('open') && !document.getElementById('editOverlay').classList.contains('open'))
+    document.body.style.overflow = '';
+}
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+let toastTimer;
+function toast(msg, isError){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('err', !!isError);
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), isError ? 3600 : 2200);
+}
+
+/* =========================================================
+   ÉVÉNEMENTS GLOBAUX
+   ========================================================= */
+document.getElementById('pills').addEventListener('click', e => {
+  const btn = e.target.closest('.pill');
+  if (!btn) return;
+  document.querySelectorAll('#pills .pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  state.filter = btn.dataset.filter;
+  renderGrid();
+});
+document.getElementById('btn-new').addEventListener('click', () => openCreate());
+document.getElementById('btn-hist').addEventListener('click', () => openHistory());
+
+document.getElementById('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeDetail(); });
+document.getElementById('editOverlay').addEventListener('click', e => { if (e.target.id === 'editOverlay') closeEdit(); });
+document.getElementById('histOverlay').addEventListener('click', e => { if (e.target.id === 'histOverlay') closeHistory(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){
+    if (document.getElementById('histOverlay').classList.contains('open')) closeHistory();
+    else if (document.getElementById('editOverlay').classList.contains('open')) closeEdit();
+    else closeDetail();
+  }
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!state.demoMode){ toast('Réinitialisation réservée au mode démo', true); return; }
+  if (!confirm('Réinitialiser les données de démonstration ?\nVéhicules ET historique seront effacés.')) return;
+  localStorage.removeItem(DEMO_VKEY);
+  localStorage.removeItem(DEMO_HKEY);
+  loadDemoData();
+  toast('Données réinitialisées');
+});
+
+/* =========================================================
+   INIT
+   ========================================================= */
+initAuthFlow();
+setModeBadge();
+</script>
+</body>
+</html>
