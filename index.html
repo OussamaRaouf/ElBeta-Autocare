@@ -15,7 +15,7 @@
 
   /* LOGIN */
   .login-screen{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:22px;background:radial-gradient(720px 340px at 10% 0%,rgba(99,102,241,.55),transparent 65%),radial-gradient(620px 320px at 90% 5%,rgba(14,165,233,.42),transparent 62%),linear-gradient(140deg,#0a1122 0%,#111a30 55%,#1b1436 100%)}
-  .login-card{width:min(420px,100%);background:#fff;border-radius:22px;box-shadow:0 44px 90px -34px rgba(0,0,0,.65);padding:30px}
+  .login-card{width:min(420px,100%);background:#fff;border-radius:22px;box-shadow:0 44px 90px -34px rgba(0,0,0,.65);padding:30px;max-height:95vh;overflow-y:auto}
   .login-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
   .login-brand .brand-mark{width:44px;height:44px;border-radius:13px}
   .login-card h2{margin:0 0 6px;font-size:20px;font-weight:800;letter-spacing:-.02em}
@@ -430,14 +430,13 @@ const findUserByEmail = e => USERS.find(u => u.email.toLowerCase() === (e||'').t
 const nameFromEmail   = e => { const u = findUserByEmail(e); return u ? u.name : (e || '—'); };
 const initialsFromEmail = e => { const u = findUserByEmail(e); return u ? u.initials : (e||'?').slice(0,2).toUpperCase(); };
 const colorFromEmail  = e => { const u = findUserByEmail(e); return u ? u.color : 'linear-gradient(140deg,#94a3b8,#64748b)'; };
-const roleFromName    = n => { const u = USERS.find(x => x.name === n); return u ? u.role : 'member'; };
 
 /* =========================================================
    ÉTAT + PERMISSIONS
    ========================================================= */
 const state = {
   demoMode: false,
-  currentUser: null,     // { email, name, initials, color, role }
+  currentUser: null,
   vehicles: [],
   history: [],
   filter: 'all',
@@ -626,21 +625,26 @@ let fbApp = null, fbAuth = null, fbDb = null;
 let FIREBASE_READY = false;
 let fbFns = {};
 
-try {
-  const configured = firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("REMPLACEZ");
-  if (configured) {
+async function loadFirebase() {
+  try {
+    const configured = firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("REMPLACEZ");
+    if (!configured) return false;
+
     const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
     const authMod = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
     const dbMod   = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+
     fbApp = initializeApp(firebaseConfig);
     fbAuth = authMod.getAuth(fbApp);
     fbDb = dbMod.getFirestore(fbApp);
     fbFns = { authMod, dbMod };
     FIREBASE_READY = true;
+    return true;
+  } catch(e) {
+    console.warn("Firebase non disponible :", e);
+    FIREBASE_READY = false;
+    return false;
   }
-} catch(e) {
-  console.warn("Firebase non disponible :", e);
-  FIREBASE_READY = false;
 }
 
 /* =========================================================
@@ -708,8 +712,10 @@ async function startFirebaseSync(){
   );
 }
 
-function initAuthFlow(){
-  if (!FIREBASE_READY) {
+async function initAuthFlow(){
+  const isFirebaseLoaded = await loadFirebase();
+
+  if (!isFirebaseLoaded) {
     state.demoMode = true;
     document.getElementById('loginFirebase').style.display = 'none';
     document.getElementById('loginDemo').style.display = 'block';
@@ -736,13 +742,11 @@ function initAuthFlow(){
   onAuthStateChanged(fbAuth, (user) => {
     if (user) {
       state.demoMode = false;
-      // Si un utilisateur est déjà mémorisé pour ce compte, on le restaure
       const stored = localStorage.getItem(USER_KEY);
       if (stored) {
         const u = USERS.find(x => x.email === stored);
         if (u) { selectUser(u); return; }
       }
-      // Sinon, on demande qui utilise l'app
       showRoleSelector();
     } else {
       state.currentUser = null;
@@ -855,7 +859,6 @@ function renderUsers(){
     return `<button class="avatar ${active ? 'active' : ''}" data-user="${u.email}" title="${esc(u.name)}${u.role === 'admin' ? ' (Admin)' : ''}" style="background:${u.color}">${u.initials}</button>`;
   }).join('');
 
-  // En mode démo OU Firebase, cliquer sur un avatar change d'utilisateur
   el.querySelectorAll('[data-user]').forEach(b => {
     b.addEventListener('click', () => {
       const u = USERS.find(x => x.email === b.dataset.user);
@@ -868,8 +871,6 @@ function renderUsers(){
 
   const badge = me ? `<span class="role-tag ${me.role}">${me.role === 'admin' ? 'Admin' : 'Membre'}</span>` : '';
   document.getElementById('you').innerHTML = me ? `Connecté : <b>${esc(me.name)}</b> ${badge}` : '';
-
-  // Afficher ou masquer les boutons admin
   document.getElementById('btn-new').classList.toggle('hidden', !canCreateVehicle());
 }
 
@@ -1551,10 +1552,47 @@ document.getElementById('btn-reset').addEventListener('click', () => {
 });
 
 /* =========================================================
-   INIT
+   INITIALISATION (le bloc qui règle le problème de blocage)
    ========================================================= */
-initAuthFlow();
-setModeBadge();
+function showDemoFormNow(){
+  document.getElementById('loginFirebase').style.display = 'none';
+  document.getElementById('loginDemo').style.display = 'block';
+  const wrap = document.getElementById('demoUsers');
+  if (wrap && !wrap.children.length) {
+    wrap.innerHTML = USERS.map(u => `
+      <button class="role-user" data-email="${u.email}">
+        <span class="dav" style="background:${u.color}">${u.initials}</span>
+        <span>
+          <span class="dname">${esc(u.name)}</span>
+        </span>
+        <span class="drole ${u.role}">${u.role === 'admin' ? 'Admin' : 'Membre'}</span>
+      </button>`).join('');
+    wrap.querySelectorAll('[data-email]').forEach(b => {
+      b.addEventListener('click', () => {
+        const u = USERS.find(x => x.email === b.dataset.email);
+        if (u) selectUser(u);
+      });
+    });
+  }
+  setModeBadge();
+}
+
+// 1. Affichage immédiat pour ne jamais rester bloqué sur l'en-tête
+showDemoFormNow();
+
+// 2. Chargement de Firebase en arrière-plan
+(async () => {
+  try {
+    if (typeof initAuthFlow === 'function') {
+      const configured = firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("REMPLACEZ");
+      if (configured) {
+        initAuthFlow(); // Si Firebase est configuré, cette fonction basculera sur le vrai login
+      }
+    }
+  } catch(e) {
+    console.warn("Impossible de charger Firebase, mode démo conservé :", e);
+  }
+})();
 </script>
 </body>
 </html>
